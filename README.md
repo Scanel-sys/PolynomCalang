@@ -4,7 +4,7 @@
 
 ## Установка (Linux)
 1. Клонирование репозитория
-```git clone https://github.com/CarlRyder/Polynom_Calculator.git```
+```git clone https://github.com/Scanel-sys/PolynomCalang.git```
 
 2. Запуск Makefile для сборки
 ```make all```
