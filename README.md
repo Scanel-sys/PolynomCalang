@@ -10,5 +10,5 @@
 ```make all```
 
 3. Запуск калькулятора полиномов
-```./build/calc```
+```./build/poly_calc```
 # PolynomCalang
