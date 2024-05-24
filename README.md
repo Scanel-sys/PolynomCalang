@@ -3,12 +3,20 @@
 Язык для работы с полиномами, написанный на __YACC__ и __C__.
 
 ## Установка (Linux)
-1. Клонирование репозитория
-```git clone https://github.com/Scanel-sys/PolynomCalang.git```
+1. Скачайте и установите [GCC компилятор](https://gcc.gnu.org)
 
-2. Запуск Makefile для сборки
-```make all```
+2. Склонируйте репозиторий
+```sh
+git clone https://github.com/Scanel-sys/PolynomCalang.git
+```
 
-3. Запуск калькулятора полиномов
-```./build/poly_calc```
+3. Запустите Makefile для сборки
+```sh
+make all
+```
+
+4. Запустите калькулятор полиномов
+```sh
+./build/poly_calc
+```
 # PolynomCalang
