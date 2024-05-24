@@ -6,8 +6,8 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-#define COUNT_POLINOM 26 //максимальное кол-во переменныых для полиномов
-#define MAX_DEG 256      //максимальная возможная степень 
+#define POLINOM_MAX_VARIABLES 26
+#define MAX_DEG 256
 
 enum error_type {
 	DOUBLE_CHARACTER,
@@ -26,17 +26,17 @@ enum error_type {
 };
 
 struct polynom_list {
-	int coeff_array[COUNT_POLINOM][MAX_DEG];
+	int coeff_array[POLINOM_MAX_VARIABLES][MAX_DEG]; 
 	char letter;
 	int max_degree;
 }; 
 
 struct polynom_list polynom_calculate[100] = {0};  //массив для подсчетов полинома
-struct polynom_list polynoms[COUNT_POLINOM] = {0}; //массив всех полиномов
+struct polynom_list polynoms[POLINOM_MAX_VARIABLES] = {0}; //массив всех полиномов
 
 int index_last_letter = 0;                         //число (индекс) последней использованной маленькой буквы
 int level_calc = 0;                                //уровень подсчетов
-int line = 1; 		   				               //номер строки для вывода ошибки
+int error_line = 1; 		   				       //номер строки для вывода ошибки
 int index_last_big_letter = 0; 			           //индекс буквы для полинома
 
 void print_error(const char* text, int line) {
@@ -48,43 +48,43 @@ void error_list(enum error_type error) {
 
 	switch (error) {
 	case DOUBLE_CHARACTER:
-		print_error("Syntax error: Double character", line);
+		print_error("Syntax error: Double character", error_line);
 
 	case EMPTY_OPERATOR:
-		print_error("Syntax error: Operator doesn't exist", line);
+		print_error("Syntax error: Operator doesn't exist", error_line);
 	
 	case NEGATIVE_DEGREE:
-		print_error("Syntax error: A degree can only be expressed by a positive number", line);
+		print_error("Syntax error: A degree can only be expressed by a positive number", error_line);
 	
 	case POLYNOM_DEGREE:
-		print_error("Syntax error: The degree shouldn't be in the form of a polynomial", line);
+		print_error("Syntax error: The degree shouldn't be in the form of a polynomial", error_line);
 
 	case INCORRECT_ASSIGNMENT:
-		print_error("Syntax error: Assigning values to a non-variable polynomial", line);
+		print_error("Syntax error: Assigning values to a non-variable polynomial", error_line);
 
 	case EMPTY_OUTPUT:
-		print_error("Syntax error: Missing values for output", line);
+		print_error("Syntax error: Missing values for output", error_line);
 	
 	case DIVISION_BY_ZERO:
-		print_error("Semantic error: Division by 0", line);
+		print_error("Semantic error: Division by 0", error_line);
 
 	case NON_INTEGER_DIVISION:
-		print_error("Semantic error: It's impossible to divide integer", line);
+		print_error("Semantic error: It's impossible to divide integer", error_line);
 	
 	case DIVISION_ERR:
-		print_error("Semantic error: The dividible is less than the divisor", line);
+		print_error("Semantic error: The dividible is less than the divisor", error_line);
 	
 	case NOT_INITIALIZED:
-		print_error("Semantic error: The variable hasn't been initialized", line);
+		print_error("Semantic error: The variable hasn't been initialized", error_line);
 	
 	case MAX_DEGREE:
-		print_error("Semantic error: Maximum polynomial degree < 256", line);
+		print_error("Semantic error: Maximum polynomial degree < 256", error_line);
 	
 	case MULTIPLICATION_VARIABLE:  
-		print_error("Semantic error: multiplicationplication of polynomials from different variables", line);
+		print_error("Semantic error: multiplicationplication of polynomials from different variables", error_line);
 
 	case ZERO_DEGREE:
-		print_error("Semantic error: uncertainty 0^0", line);
+		print_error("Semantic error: uncertainty 0^0", error_line);
 
 	default:
 		break;
@@ -92,20 +92,23 @@ void error_list(enum error_type error) {
 }
 
 bool is_empty(struct polynom_list poly) {
-	for (int i = 0; i < COUNT_POLINOM; i++){
+	for (int i = 0; i < POLINOM_MAX_VARIABLES; i++){
 		for (int j = 0; j < MAX_DEG; j++){
-			if (i == j == 0) continue;
-			if (poly.coeff_array[i][j] > 0){ return false; }
+			if (!(i == j == 0) && poly.coeff_array[i][j] > 0){
+				return false;
+			}
 		}
 	}
 	return true;
 }
 
 struct polynom_list unary_minus(struct polynom_list poly) {
-	for (int i = 0; i < COUNT_POLINOM; i++)
-		for (int j = 0; j <= poly.max_degree; j++)
+	for (int i = 0; i < POLINOM_MAX_VARIABLES; i++){
+		for (int j = 0; j <= poly.max_degree; j++){
 			poly.coeff_array[i][j] = -poly.coeff_array[i][j];
-	return (poly);
+		}
+	}
+	return poly;
 }
 
 struct polynom_list addition(const int sign, struct polynom_list poly_1, struct polynom_list poly_2) {
@@ -115,7 +118,7 @@ struct polynom_list addition(const int sign, struct polynom_list poly_1, struct 
 	memset(&backup, 0, sizeof(struct polynom_list));
 
 	deg = poly_1.max_degree >= poly_2.max_degree ? poly_1.max_degree : poly_2.max_degree;
-	for (int i = 0; i < COUNT_POLINOM; i++) {
+	for (int i = 0; i < POLINOM_MAX_VARIABLES; i++) {
 		for (int j = 0; j <= deg; j++) {
 			result = (sign == 1) ? poly_2.coeff_array[i][j] + 
 				poly_1.coeff_array[i][j] : poly_1.coeff_array[i][j] - poly_2.coeff_array[i][j];
@@ -123,16 +126,16 @@ struct polynom_list addition(const int sign, struct polynom_list poly_1, struct 
 			backup.coeff_array[i][j] = (backup.coeff_array[i][j] == 0) ? result : backup.coeff_array[i][j] + result;
 		}
 	}
-	for (int i = 0; i < COUNT_POLINOM; i++) {
-		for (int j = 0; j < COUNT_POLINOM; j++) {
-			if (backup.coeff_array[i][0] != 0 && backup.coeff_array[j][0] != 0 && i < j) {
+	for (int i = 0; i < POLINOM_MAX_VARIABLES; i++) {
+		for (int j = 0; j < POLINOM_MAX_VARIABLES; j++) {
+			if (i < j && backup.coeff_array[i][0] != 0 && backup.coeff_array[j][0] != 0) {
 				backup.coeff_array[j][0] = backup.coeff_array[i][0] + backup.coeff_array[j][0];
 				backup.coeff_array[i][0] = 0;
 			}
 		}
 	}
 	backup.max_degree = deg;
-	return (backup);
+	return backup;
 }
 
 struct polynom_list multiplication(struct polynom_list poly_1, struct polynom_list poly_2) {
@@ -142,10 +145,10 @@ struct polynom_list multiplication(struct polynom_list poly_1, struct polynom_li
 
 	if (poly_1.max_degree == 0) {
 		int count = 0;
-		while (poly_1.coeff_array[count][0] == 0 && count < COUNT_POLINOM) {
+		while (poly_1.coeff_array[count][0] == 0 && count < POLINOM_MAX_VARIABLES) {
 			count++;
 		}
-		for (int i = 0; i < COUNT_POLINOM; i++) {
+		for (int i = 0; i < POLINOM_MAX_VARIABLES; i++) {
 			for (int j = 0; j <= poly_2.max_degree; j++) {
 				result = poly_1.coeff_array[count][0] * poly_2.coeff_array[i][j];
 				backup.coeff_array[i][j] = result;
@@ -153,14 +156,16 @@ struct polynom_list multiplication(struct polynom_list poly_1, struct polynom_li
 		}
 
 		backup.max_degree = poly_2.max_degree;
-		return (backup);
+		return backup;
 	}
 
-	for (int i = 0; i < COUNT_POLINOM; i++) {
-		for (int j = 0; j < COUNT_POLINOM; j++) {
+	for (int i = 0; i < POLINOM_MAX_VARIABLES; i++) {
+		for (int j = 0; j < POLINOM_MAX_VARIABLES; j++) {
 			for (int l = 0; l <= poly_1.max_degree; l++) {
 				for (int m = 0; m <= poly_2.max_degree; m++) {
-					if ((poly_1.coeff_array[i][l] != 0 && poly_2.coeff_array[j][m] != 0) && i != j) { error_list(MULTIPLICATION_VARIABLE); }
+					if (i != j && poly_1.coeff_array[i][l] != 0 && poly_2.coeff_array[j][m] != 0) {
+						error_list(MULTIPLICATION_VARIABLE);
+					}
 					result = poly_1.coeff_array[i][l] * poly_2.coeff_array[j][m];
 					deg = l + m;
 					backup.coeff_array[i][deg] = (backup.coeff_array[i][deg] == 0) ? result : backup.coeff_array[i][deg] + result;
@@ -181,7 +186,7 @@ struct polynom_list divide(struct polynom_list poly_1, struct polynom_list poly_
 
 	if (poly_2.max_degree == 0) {
 		int flag = 0;
-		for (int i = 0; i < COUNT_POLINOM; i++) {
+		for (int i = 0; i < POLINOM_MAX_VARIABLES; i++) {
 			if(poly_2.coeff_array[i][0] != 0) { flag = 1  ; break;}
 		}
 		if (flag == 0) error_list(DIVISION_BY_ZERO);
@@ -189,14 +194,22 @@ struct polynom_list divide(struct polynom_list poly_1, struct polynom_list poly_
 
     if (poly_1.max_degree < poly_2.max_degree) { error_list(DIVISION_ERR); }
 
-    for (int i = 0; i < COUNT_POLINOM; i++) {
-		for (int j = 0; j < COUNT_POLINOM; j++) {
+    for (int i = 0; i < POLINOM_MAX_VARIABLES; i++) {
+		for (int j = 0; j < POLINOM_MAX_VARIABLES; j++) {
 			for (int l = 0; l <= poly_1.max_degree; l++) {
 				for (int m = 0; m <= poly_2.max_degree; m++) {
-					if ((poly_1.coeff_array[i][l] != 0 && poly_2.coeff_array[j][m] != 0) && i != j) error_list(MULTIPLICATION_VARIABLE);
-					if (poly_1.coeff_array[i][l] == 0 || poly_2.coeff_array[j][m] == 0) continue;
-					else if (poly_1.coeff_array[i][l] % poly_2.coeff_array[j][m] != 0) error_list(NON_INTEGER_DIVISION);
-					else result = poly_1.coeff_array[i][l] / poly_2.coeff_array[j][m];
+					if ((poly_1.coeff_array[i][l] != 0 && poly_2.coeff_array[j][m] != 0) && i != j) {
+						error_list(MULTIPLICATION_VARIABLE);
+					}
+					if (poly_1.coeff_array[i][l] == 0 || poly_2.coeff_array[j][m] == 0) {
+						continue;
+					}
+					else if (poly_1.coeff_array[i][l] % poly_2.coeff_array[j][m] != 0) {
+						error_list(NON_INTEGER_DIVISION);
+					}
+					else {
+						result = poly_1.coeff_array[i][l] / poly_2.coeff_array[j][m];
+					}
 					deg = l - m;
 					backup.coeff_array[i][deg] = (backup.coeff_array[i][deg] == 0) ? (int)result : backup.coeff_array[i][deg] + (int)result;
 				}
@@ -207,32 +220,32 @@ struct polynom_list divide(struct polynom_list poly_1, struct polynom_list poly_
 	return backup;
 }
 
-void print(struct polynom_list poly_1) {
+void print(struct polynom_list poly) {
 	int null_check = 0;
 	int flag = 0;
 	int num = 0;
-	if (poly_1.letter != 0) { printf("%c = ", poly_1.letter); }
+	if (poly.letter != 0) { printf("%c = ", poly.letter); }
 
-	for (int i = 0; i < COUNT_POLINOM; i++) {
-		for (int j = poly_1.max_degree; j >= 0; j--) {
-			if (poly_1.coeff_array[i][j] != 0) {
+	for (int i = 0; i < POLINOM_MAX_VARIABLES; i++) {
+		for (int j = poly.max_degree; j >= 0; j--) {
+			if (poly.coeff_array[i][j] != 0) {
 
-				if ((num != 0) && (flag != i) && (poly_1.coeff_array[i][j] > 0)) { printf("+"); }
+				if ((num != 0) && (flag != i) && (poly.coeff_array[i][j] > 0)) { printf("+"); }
 
 				flag = i;
 				num = 1;
 
-				if (poly_1.coeff_array[i][j] == -1 && j != 0) { printf("-"); }
-				else if (poly_1.coeff_array[i][j] != 1 || j == 0) { printf("%d", poly_1.coeff_array[i][j]); }
+				if (poly.coeff_array[i][j] == -1 && j != 0) { printf("-"); }
+				else if (poly.coeff_array[i][j] != 1 || j == 0) { printf("%d", poly.coeff_array[i][j]); }
 
 				if (j != 0 && j == 1) { printf("%c", i + 'a'); }
 				else if (j != 0) { printf("%c", i + 'a'); printf("^%d", j); }
 
 				if (j != 0) {
-					while (poly_1.coeff_array[i][j - 1] == 0) {
+					while (poly.coeff_array[i][j - 1] == 0) {
 						j--;
 					}
-					if ((j <= 0) || (poly_1.coeff_array[i][j - 1] <= 0));
+					if ((j <= 0) || (poly.coeff_array[i][j - 1] <= 0));
 					else { printf("+"); }
 				}
 				null_check = 1;
@@ -258,7 +271,7 @@ starter: begin
 	| enter 
 ;
 
-enter: '\n' { line++; }
+enter: '\n' { error_line++; }
 ;
 
 begin: '>' main {
@@ -397,7 +410,7 @@ kit: number {
 		}
 		polynom_calculate[level_calc] = polynoms[i];
 		struct polynom_list poly_backup = polynom_calculate[level_calc];
-		for (int j = 0; j < COUNT_POLINOM; j++) {				
+		for (int j = 0; j < POLINOM_MAX_VARIABLES; j++) {				
 			for (int i = 0; i <= polynom_calculate[level_calc].max_degree; i++) {
 				polynom_calculate[level_calc].coeff_array[j][i] = poly_backup.coeff_array[j][i] * $1;
 			}
@@ -420,7 +433,7 @@ kit: number {
 				polynom_calculate[level_calc] = multiplication(polynom_calculate[level_calc], poly_backup);
 				degree_pol++;
 			}
-			for (int j = 0; j < COUNT_POLINOM; j++) {				
+			for (int j = 0; j < POLINOM_MAX_VARIABLES; j++) {				
 				for (int i = 0; i <= polynom_calculate[level_calc].max_degree; i++)
 					polynom_calculate[level_calc].coeff_array[j][i] = polynom_calculate[level_calc].coeff_array[j][i] * $1;
 			}
